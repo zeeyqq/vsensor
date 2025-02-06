@@ -45,14 +45,11 @@ void CANCommunication::initializeSocket(int& socket_fd, struct sockaddr_can& add
         throw std::runtime_error("소켓 바인딩 실패");
     }
 
-    // 모든 CAN 메시지를 수신하도록 필터 해제
-    setsockopt(socket_fd, SOL_CAN_RAW, CAN_RAW_FILTER, NULL, 0);
-
-    // 논블로킹 모드 설정
-    int flags = fcntl(socket_fd, F_GETFL, 0);
-    fcntl(socket_fd, F_SETFL, flags | O_NONBLOCK);
-
-    std::cout << "[디버깅] CAN 소켓 논블로킹 모드 설정 완료" << std::endl;
+    // 자신이 보낸 메시지도 수신하도록 설정.
+    int recvOwn = 1;
+    if (setsockopt(socket_fd, SOL_CAN_RAW, CAN_RAW_RECV_OWN_MSGS, &recvOwn, sizeof(recvOwn)) < 0) {
+        std::cerr << "[오류] CAN_RAW_RECV_OWN_MSGS 옵션 설정 실패: " << strerror(errno) << std::endl;
+    }
 
     std::cout << "[디버깅] CAN 소켓 초기화 완료: socket_fd=" << socket_fd << std::endl;
     this->socket_fd = socket_fd;
