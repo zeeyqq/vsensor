@@ -51,7 +51,7 @@ void CANCommunication::initializeSocket(int& socket_fd, struct sockaddr_can& add
         std::cerr << "[오류] CAN_RAW_RECV_OWN_MSGS 옵션 설정 실패: " << strerror(errno) << std::endl;
     }
 
-    std::cout << "[디버깅] CAN 소켓 초기화 완료: socket_fd=" << socket_fd << std::endl;
+    // std::cout << "[디버깅] CAN 소켓 초기화 완료: socket_fd=" << socket_fd << std::endl;
     this->socket_fd = socket_fd;
 }
 
@@ -131,7 +131,6 @@ void CANCommunication::run() {
 
     close(socket_fd);
     socket_fd = -1;
-    std::cout << "[정보] 통신 종료" << std::endl;
 }
 
 void CANCommunication::handleIncomingData() {
@@ -141,7 +140,7 @@ void CANCommunication::handleIncomingData() {
     pfd.fd = socket_fd;
     pfd.events = POLLIN;  // 읽기 가능 이벤트 감지
 
-    std::cout << "[디버깅] 수신 스레드 시작됨" << std::endl;
+    // std::cout << "[디버깅] 수신 스레드 시작됨" << std::endl;
 
     while (connected) {
         if (socket_fd < 0) {
@@ -149,7 +148,7 @@ void CANCommunication::handleIncomingData() {
             break;
         }
 
-        std::cout << "[디버깅] CAN 데이터 수신 대기 중..." << std::endl;
+        // std::cout << "[디버깅] CAN 데이터 수신 대기 중..." << std::endl;
 
         // poll()을 사용하여 데이터가 도착했는지 확인 (타임아웃 500ms)
         int ret = poll(&pfd, 1, 500);
@@ -158,7 +157,7 @@ void CANCommunication::handleIncomingData() {
                 << " (errno=" << errno << ")" << std::endl;
             break;
         } else if (ret == 0) {
-            std::cout << "[디버깅] poll() 타임아웃: 데이터 없음" << std::endl;
+            // std::cout << "[디버깅] poll() 타임아웃: 데이터 없음" << std::endl;
             continue;  // 데이터가 없으면 다시 대기
         }
 
@@ -166,9 +165,9 @@ void CANCommunication::handleIncomingData() {
         ssize_t nbytes = read(socket_fd, &frame, sizeof(struct can_frame));
 
         if (nbytes > 0 && nbytes == sizeof(struct can_frame)) {
-            std::cout << "[디버깅] CAN 데이터 수신됨: ID=0x"
-                      << std::hex << frame.can_id << std::dec
-                      << ", 길이=" << (int)frame.can_dlc << std::endl;
+            // std::cout << "[디버깅] CAN 데이터 수신됨: ID=0x"
+            //           << std::hex << frame.can_id << std::dec
+            //           << ", 길이=" << (int)frame.can_dlc << std::endl;
 
             processReceivedData(frame);
         } else if (nbytes == 0) {
@@ -179,7 +178,7 @@ void CANCommunication::handleIncomingData() {
         }
     }
 
-    std::cout << "[디버깅] 수신 스레드 종료됨" << std::endl;
+    // std::cout << "[디버깅] 수신 스레드 종료됨" << std::endl;
 }
 
 void CANCommunication::processReceivedData(const can_frame& frame) {
@@ -217,7 +216,7 @@ void CANCommunication::processReceivedData(const can_frame& frame) {
     lastReceiveTime = std::chrono::steady_clock::now();
 
     // 데이터 유형과 함께 값 출력
-    std::cout << "[수신] " << dataType << " | "
+    std::cout << "[CAN 수신] " << dataType << " | "
               << "값1=" << values[0] << ", "
               << "값2=" << values[1] << ", "
               << "값3=" << values[2] << std::endl;
@@ -233,7 +232,7 @@ void CANCommunication::sendData(const can_frame& frame) {
     if (nbytes != sizeof(struct can_frame)) {
         std::cerr << "[오류] 데이터 전송 실패" << std::endl;
     } else {
-        std::cout << "[송신] CAN ID: 0x" << std::hex << frame.can_id << " 데이터 길이: " << std::dec << (int)frame.can_dlc << " 데이터: ";
+        std::cout << "[CAN 송신] CAN ID: 0x" << std::hex << frame.can_id << " 데이터 길이: " << std::dec << (int)frame.can_dlc << " 데이터: ";
         for (int i = 0; i < frame.can_dlc; ++i) {
             std::cout << "0x" << std::hex << (int)frame.data[i] << " ";
         }
@@ -256,9 +255,9 @@ void CANCommunication::updateConnectionStatus() {
 
         // 상태 출력
         std::string statusText = (connectionStatus == 2) ? "양호" : (connectionStatus == 1) ? "미흡" : "끊김";
-        std::cout << "[통신 상태] " << statusText << " (마지막 수신: " << elapsed << "ms 전)" << std::endl;
+        std::cout << "[CAN 통신 상태] " << statusText << " (마지막 수신: " << elapsed << "ms 전)" << std::endl;
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     }
 }
 
