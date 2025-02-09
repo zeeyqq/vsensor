@@ -10,7 +10,7 @@ int main() {
     canComm.start();
 
     // RS232 통신 시작
-    RS232Communication rs232Comm("/dev/pts/5", 1000);
+    RS232Communication rs232Comm("/dev/pts/3", "/dev/pts/2", 1000);
     rs232Comm.start();  // RS232 시작
 
     // exec for 10 secs..
