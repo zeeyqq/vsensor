@@ -1,5 +1,4 @@
-QT       += core gui
-
+QT       += core gui serialport
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 CONFIG += c++17
@@ -11,12 +10,14 @@ QMAKE_CXXFLAGS += -D_GNU_SOURCE
 
 SOURCES += \
     main.cpp \
+    ui/commSimulator.cpp \
     ui/mainwindow.cpp \
     comm/CANCommunication.cpp \
     comm/RS232Communication.cpp \
 
 HEADERS += \
     comm/HardwareCommunication.h \
+    ui/commSimulator.h \
     ui/mainwindow.h \
     comm/CANCommunication.h \
     comm/RS232Communication.h \

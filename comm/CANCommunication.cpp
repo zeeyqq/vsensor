@@ -220,6 +220,14 @@ void CANCommunication::processReceivedData(const can_frame& frame) {
               << "값1=" << values[0] << ", "
               << "값2=" << values[1] << ", "
               << "값3=" << values[2] << std::endl;
+
+    QString data = QString("[CAN 수신] %1 | 값1=%2, 값2=%3, 값3=%4")
+        .arg(QString::fromStdString(dataType))
+        .arg(values[0])
+        .arg(values[1])
+        .arg(values[2]);
+
+    emit dataReceived(data);
 }
 
 void CANCommunication::sendData(const can_frame& frame) {

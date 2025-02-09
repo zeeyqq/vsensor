@@ -1,9 +1,20 @@
 #include "CANCommunication.h"
 #include "RS232Communication.h"
+#include "commSimulator.h"
+#include <QApplication>
 #include <iostream>
 #include <chrono>
 #include <thread>
 
+int main(int argc, char *argv[])
+{
+    QApplication a(argc, argv);
+    CommSimulator w;  // CommSimulator 클래스 인스턴스 생성
+    w.show();  // UI를 표시
+    return a.exec();  // 이벤트 루프 시작
+}
+
+/*
 int main() {
     // CAN 통신 시작
     CANCommunication canComm("vcan0");
@@ -23,3 +34,4 @@ int main() {
 
     return 0;
 }
+*/

@@ -7,8 +7,8 @@
 #include <mutex>
 #include <regex>
 
-RS232Communication::RS232Communication(const std::string& sendPort, const std::string& receivePort, int intervalMs)
-    : sendPort(sendPort), receivePort(receivePort), intervalMs(intervalMs) {}
+RS232Communication::RS232Communication(const std::string& sendPort, const std::string& receivePort)
+    : sendPort(sendPort), receivePort(receivePort){}
 
 RS232Communication::~RS232Communication() {
     stop();
@@ -44,7 +44,7 @@ void RS232Communication::sendData() {
             std::cerr << "RS232 포트를 열 수 없습니다: " << sendPort << std::endl;
         }
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(intervalMs));  // 송신 간격
+        std::this_thread::sleep_for(std::chrono::milliseconds(sendIntervalMs));  // 송신 간격
     }
 }
 
@@ -79,45 +79,52 @@ void RS232Communication::printNMEAMessage(const std::string& message) {
     std::size_t gphdt_pos = message.find("$GPHDT");
     std::size_t gpvtg_pos = message.find("$GPVTG");
 
+    QString data;
+
     if (gpgga_pos != std::string::npos) {
-        // 메시지에서 타임스탬프 제거
-        std::string cleanedMessage = message.substr(message.find("$GPGGA"));
-        std::cout << " - [GPGGA 포맷] \n";
+        // GPGGA 메시지 처리
+        std::string cleanedMessage = message.substr(gpgga_pos);
         std::vector<std::string> fields = parseNMEAMessage(cleanedMessage);
+
         if (fields.size() >= 15) {
-            std::cout << "   - UTC 시간: " << fields[1] << "\n";
-            std::cout << "   - 위도: " << fields[2] << " " << fields[3] << "\n";
-            std::cout << "   - 경도: " << fields[4] << " " << fields[5] << "\n";
-            std::cout << "   - 고정 품질: " << fields[6] << "\n";
-            std::cout << "   - 사용 중 위성 수: " << fields[7] << "\n";
-            std::cout << "   - HDOP: " << fields[8] << "\n";
-            std::cout << "   - 고도: " << fields[9] << " " << fields[10] << "\n";
-            std::cout << "   - 지구 표면 간격: " << fields[11] << " " << fields[12] << "\n";
-            std::cout << "   - DGPS 데이터 지연: " << fields[13] << "\n";
-            std::cout << "   - DGPS 기준 ID: " << fields[14] << "\n";
+            data += "[GPGGA 포맷]\n";
+            data += "   - UTC 시간: " + QString::fromStdString(fields[1]) + "\n";
+            data += "   - 위도: " + QString::fromStdString(fields[2]) + " " + QString::fromStdString(fields[3]) + "\n";
+            data += "   - 경도: " + QString::fromStdString(fields[4]) + " " + QString::fromStdString(fields[5]) + "\n";
+            data += "   - 고정 품질: " + QString::fromStdString(fields[6]) + "\n";
+            data += "   - 사용 중 위성 수: " + QString::fromStdString(fields[7]) + "\n";
+            data += "   - HDOP: " + QString::fromStdString(fields[8]) + "\n";
+            data += "   - 고도: " + QString::fromStdString(fields[9]) + " " + QString::fromStdString(fields[10]) + "\n";
+            data += "   - 지구 표면 간격: " + QString::fromStdString(fields[11]) + " " + QString::fromStdString(fields[12]) + "\n";
+            data += "   - DGPS 데이터 지연: " + QString::fromStdString(fields[13]) + "\n";
+            data += "   - DGPS 기준 ID: " + QString::fromStdString(fields[14]) + "\n";
         }
     } else if (gphdt_pos != std::string::npos) {
-        // 메시지에서 타임스탬프 제거
+        // GPHDT 메시지 처리
         std::string cleanedMessage = message.substr(gphdt_pos);
         std::vector<std::string> fields = parseNMEAMessage(cleanedMessage);
+
         if (fields.size() >= 3) {
-            std::cout << " - [GPHDT 포맷] \n";
-            std::cout << "   - 헤딩: " << fields[1] << " 도\n";
-            std::cout << "   - 방향: " << fields[2] << "\n";
+            data += "[GPHDT 포맷]\n";
+            data += "   - 헤딩: " + QString::fromStdString(fields[1]) + " 도\n";
+            data += "   - 방향: " + QString::fromStdString(fields[2]) + "\n";
         }
     } else if (gpvtg_pos != std::string::npos) {
-        // 메시지에서 타임스탬프 제거
+        // GPVTG 메시지 처리
         std::string cleanedMessage = message.substr(gpvtg_pos);
         std::vector<std::string> fields = parseNMEAMessage(cleanedMessage);
+
         if (fields.size() >= 9) {
-            std::cout << " - [GPVTG 포맷] \n";
-            std::cout << "   - 진북 기준 트랙 각도: " << fields[1] << " 도\n";
-            std::cout << "   - 속도 (노트): " << fields[5] << " 노트\n";
-            std::cout << "   - 속도 (킬로미터/시간): " << fields[7] << " km/h\n";
+            data += "[GPVTG 포맷]\n";
+            data += "   - 진북 기준 트랙 각도: " + QString::fromStdString(fields[1]) + " 도\n";
+            data += "   - 속도 (노트): " + QString::fromStdString(fields[5]) + " 노트\n";
+            data += "   - 속도 (킬로미터/시간): " + QString::fromStdString(fields[7]) + " km/h\n";
         }
     } else {
-        std::cout << " - [알 수 없는 포맷]\n";
+        data += "[알 수 없는 포맷]\n";
     }
+
+    emit dataReceived(data);
 }
 
 std::vector<std::string> RS232Communication::parseNMEAMessage(const std::string& message) {
@@ -293,10 +300,10 @@ bool RS232Communication::verifyChecksum(const std::string& sentence) {
 
         // 체크섬 검증
         if (calculateChecksum(match[1].str()) == match[2].str()) {
-            std::cout << "체크섬 검증 성공!" << std::endl;
+            // std::cout << "체크섬 검증 성공!" << std::endl;
             return true;
         } else {
-            std::cerr << "체크섬 불일치! 예상: [" << calculateChecksum(match[1].str())
+            std::cerr << "[RS232] 체크섬 불일치! 예상: [" << calculateChecksum(match[1].str())
                 << "] / 받은 값: [" << match[2].str() << "]" << std::endl;
         }
     } else {
@@ -304,4 +311,13 @@ bool RS232Communication::verifyChecksum(const std::string& sentence) {
     }
 
     return false;
+}
+
+void RS232Communication::enableRS232Send(bool enable) {
+    rs232SendEnabled.store(enable);
+}
+
+
+void RS232Communication::setSendPeriod(int intervalMs) {
+    sendIntervalMs.store(intervalMs);
 }

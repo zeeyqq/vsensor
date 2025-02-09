@@ -7,23 +7,35 @@
 #include <random>
 #include <iostream>
 #include <mutex>
+#include <QObject>
 
-class RS232Communication : public HardwareCommunication {
+class RS232Communication : public QObject, public HardwareCommunication {
+    Q_OBJECT
 public:
-    RS232Communication(const std::string& sendPort, const std::string& receivePort, int intervalMs = 500);
+    RS232Communication(const std::string& sendPort, const std::string& receivePort);
     ~RS232Communication();
 
     void sendData();  // 데이터 송신 함수
     void receiveData();  // 데이터 수신 함수
     void monitorConnection();  // 연결 상태 모니터링 함수
 
+    void enableRS232Send(bool);
+    std::atomic<bool> rs232SendEnabled{false}; // RS232 송신 활성화 여부
+
+    void setSendPeriod(int);
+
 protected:
     void run() override;  // 통신 루프
+
+signals:
+    void dataReceived(const QString &data);  // 수신된 데이터를 CommSimulator에 전달
 
 private:
     std::string sendPort;  // 송신 포트
     std::string receivePort;  // 수신 포트
-    int intervalMs;  // 송신 주기 (ms)
+
+    std::atomic<int> sendIntervalMs{500}; // 송신 주기 (기본 100ms)
+    // int intervalMs;  // 송신 주기 (ms)
     // bool connectionStatus;  // 연결 상태
     std::mutex dataMutex;  // 수신된 데이터 보호용 뮤텍스
     std::string lastReceivedTime;  // 마지막 수신 시간

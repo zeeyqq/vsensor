@@ -15,16 +15,25 @@
 #include <map>
 #include <mutex>
 #include <unordered_map>
+#include <QObject>
 
-class CANCommunication : public HardwareCommunication {
+class CANCommunication : public QObject, public HardwareCommunication {
+    Q_OBJECT
 public:
     explicit CANCommunication(const std::string& interfaceName);
     ~CANCommunication();
 
     void sendData(const can_frame& frame);
 
+    void enableCANSend(bool);
+    std::atomic<bool> canSendEnabled{false}; // CAN 송신 활성화 여부
+    void setSendPeriod(int);
+
 protected:
     void run() override;
+
+signals:
+    void dataReceived(const QString &data);  // 수신된 데이터를 CommSimulator에 전달
 
 private:
     std::string interfaceName;
@@ -36,7 +45,6 @@ private:
     std::unordered_map<int, std::string> idToDataType;
     std::atomic<int> connectionStatus{0};  // 0: 끊김, 1: 미흡, 2: 양호
 
-    std::atomic<bool> canSendEnabled{true}; // CAN 송신 활성화 여부
     std::atomic<int> sendPeriodMs{2000}; // 송신 주기 (기본 100ms)
     std::chrono::steady_clock::time_point lastReceiveTime;  // 마지막 수신 시간 기록
 
@@ -48,8 +56,6 @@ private:
     void processReceivedData(const can_frame& frame);
     void displayDataMeaning(const can_frame& frame);
     void updateConnectionStatus();
-    void enableCANSend(bool);
-    void setSendPeriod(int);
 };
 
 #endif // CANCOMMUNICATION_H
