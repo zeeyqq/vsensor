@@ -14,10 +14,12 @@ CommSimulator::CommSimulator(QWidget *parent)
     // CAN 통신 객체 생성 및 시그널 연결
     canComm = new CANCommunication("vcan0");
     connect(canComm, &CANCommunication::dataReceived, this, &CommSimulator::dataReceived);
+    connect(canComm, &CANCommunication::connectionStatusChanged, this, &CommSimulator::updateConnectionStatusLabel);
 
     // RS232 통신 객체 생성 및 시그널 연결
     rs232Comm = new RS232Communication("/dev/pts/3", "/dev/pts/2");
     connect(rs232Comm, &RS232Communication::dataReceived, this, &CommSimulator::dataReceived);
+    connect(rs232Comm, &RS232Communication::connectionStatusChanged, this, &CommSimulator::updateConnectionStatusLabelRS);
 
 }
 
@@ -58,7 +60,11 @@ void CommSimulator::setupUI() {
     canStatusLabel = new QLabel("CAN Status: Disconnected", this);
     rs232StatusLabel = new QLabel("RS232 Status: Disconnected", this);
     receivedDataLabel = new QLabel("Received Data: None", this);
-    communicationStatusLabel = new QLabel("Communication Status: Unknown", this);
+    communicationStatusLabel = new QLabel("CAN Communication Status: Unknown", this);
+    communicationStatusLabel2 = new QLabel("RS232 Communication Status: Unknown", this);
+
+    // 데이터 목록을 표시할 QListWidget 추가
+    receivedDataListWidget = new QListWidget(this);
 
     QVBoxLayout *mainLayout = new QVBoxLayout;
     mainLayout->addWidget(timestampLabel);
@@ -72,6 +78,8 @@ void CommSimulator::setupUI() {
     mainLayout->addWidget(rs232StatusLabel);
     mainLayout->addWidget(receivedDataLabel);
     mainLayout->addWidget(communicationStatusLabel);
+    mainLayout->addWidget(communicationStatusLabel2);
+    mainLayout->addWidget(receivedDataListWidget);
 
     setLayout(mainLayout);
 }
@@ -88,7 +96,7 @@ void CommSimulator::setRS232SendInterval() {
     int intervalMs = rs232SendIntervalSpinBox->value();
     if (rs232Comm) {
         rs232Comm->setSendPeriod(intervalMs);  // RS232 송신 주기 설정
-        communicationStatusLabel->setText("RS232 Send Interval Updated");
+        communicationStatusLabel2->setText("RS232 Send Interval Updated");
     }
 }
 
@@ -138,6 +146,23 @@ void CommSimulator::dataReceived(const QString &data) {
     QString timestamp = QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss");
     timestampLabel->setText("Last Data Timestamp: " + timestamp);
 
-    QString formattedData = QString("Received: %1 @ %2").arg(data).arg(timestamp);
+    QString formattedData = QString("Received: %1 @ %2").arg(timestamp).arg(data);
     receivedDataLabel->setText(formattedData);
+
+    // 수신된 데이터를 목록에 추가
+    receivedDataListWidget->addItem(formattedData);
+
+    // 리스트의 크기가 50개 이상이면 가장 오래된 항목을 제거
+    if (receivedDataListWidget->count() > 50) {
+        delete receivedDataListWidget->takeItem(receivedDataListWidget->count() - 1);
+    }
+
+}
+
+void CommSimulator::updateConnectionStatusLabel(const QString &status) {
+    // 상태 레이블을 UI에 표시
+    communicationStatusLabel->setText("CAN 통신 상태: " + status);
+}
+void CommSimulator::updateConnectionStatusLabelRS(const QString &status) {
+    communicationStatusLabel2->setText("RS232 통신 상태: " + status);
 }

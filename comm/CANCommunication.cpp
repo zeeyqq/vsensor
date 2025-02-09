@@ -255,17 +255,21 @@ void CANCommunication::updateConnectionStatus() {
 
         if (elapsed < 500) {
             connectionStatus = 2;  // 양호
-        } else if (elapsed < 2000) {
+        } else if (elapsed < sendPeriodMs) {
             connectionStatus = 1;  // 미흡
         } else {
             connectionStatus = 0;  // 끊김
         }
 
-        // 상태 출력
-        std::string statusText = (connectionStatus == 2) ? "양호" : (connectionStatus == 1) ? "미흡" : "끊김";
-        std::cout << "[CAN 통신 상태] " << statusText << " (마지막 수신: " << elapsed << "ms 전)" << std::endl;
+        // 상태를 QString으로 변환
+        QString statusText = (connectionStatus == 2) ? "양호" : (connectionStatus == 1) ? "미흡" : "끊김";
 
+        // UI 스레드에서 QLabel을 업데이트 하려면 signal/slot 메커니즘을 이용해야 함
+        emit connectionStatusChanged(statusText); // connectionStatusChanged 시그널을 통해 UI를 업데이트
+
+        // 1초마다 상태를 갱신
         std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+
     }
 }
 

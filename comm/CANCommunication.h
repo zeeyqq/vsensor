@@ -34,6 +34,7 @@ protected:
 
 signals:
     void dataReceived(const QString &data);  // 수신된 데이터를 CommSimulator에 전달
+    void connectionStatusChanged(const QString& status);
 
 private:
     std::string interfaceName;

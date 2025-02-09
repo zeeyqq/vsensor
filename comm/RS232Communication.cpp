@@ -228,13 +228,17 @@ void RS232Communication::monitorConnection() {
         auto now = std::chrono::system_clock::now();
         std::chrono::duration<double> elapsed_seconds = now - lastReceivedTimestamp;
 
+        QString statusText;
         if (elapsed_seconds.count() < 2) {
-            std::cout << "[RS232 연결 상태] 양호" << std::endl;
+            statusText = "양호";
         } else if (elapsed_seconds.count() < 5) {
-            std::cout << "[RS232 연결 상태] 미흡" << std::endl;
+            statusText = "미흡";
         } else {
-            std::cout << "[RS232 연결 상태] 끊김" << std::endl;
+            statusText = "끊김";
         }
+
+        // 시그널 발송
+        emit connectionStatusChanged(statusText);
     }
 }
 

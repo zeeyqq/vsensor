@@ -28,6 +28,10 @@ private slots:
     // void handleDisconnection();        // 재연결 시도
     void dataReceived(const QString &data); // 데이터 수신 시그널 처리
 
+public slots:
+    void updateConnectionStatusLabel(const QString &status);
+    void updateConnectionStatusLabelRS(const QString &status);
+
 private:
     bool canActive = false;
     bool rs232Active = false;
@@ -37,11 +41,13 @@ private:
     QLabel *rs232StatusLabel;           // RS232 상태 라벨
     QLabel *receivedDataLabel;          // 수신 데이터 라벨
     QLabel *communicationStatusLabel;   // 통신 상태 라벨
+    QLabel *communicationStatusLabel2;   // 통신 상태 라벨
 
     QPushButton *canToggleButton;       // CAN 토글 버튼
     QPushButton *rs232ToggleButton;     // RS232 토글 버튼
     QSpinBox *canSendIntervalSpinBox;   // CAN 송신 주기 설정 스핀 박스
     QSpinBox *rs232SendIntervalSpinBox; // RS232 송신 주기 설정 스핀 박스
+    QListWidget *receivedDataListWidget;
 
     CANCommunication *canComm;     // CAN 통신 객체
     RS232Communication *rs232Comm; // RS232 통신 객체
